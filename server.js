@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 const port = 9000;
 const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jwt');
+const cookie = require('cookie');
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -11,9 +15,22 @@ app.get("/user", async (req,res) => {
     return res.send(user);
 })
 
+const userFromDB = async (email) => {
+    //get user from db
+    return user && user.email === email ? user : null;
+}
+
 app.post("/login", async (req, res) =>{
     let {email, pwd} = req.body;
-    user = {email, pwd}
+    const password = email + pwd + "secretKey";
+    const passwordHash = await bcrypt.hash(password, 12);
+    let user = await userFromDB(email)
+    if(user) {
+         
+    }else{
+        let newUser = {email, password: passwordHash};
+        let addedUser = await addUserToDB(newUser);
+    }
     return res.sendStatus(200)
 })
 
