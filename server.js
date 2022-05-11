@@ -3,7 +3,7 @@ const app = express();
 const port = 9000;
 const path = require('path');
 const bcrypt = require('bcrypt');
-const jwt = require('jwt');
+const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
 
 app.use(express.json());
@@ -20,6 +20,13 @@ const userFromDB = async (email) => {
     return user && user.email === email ? user : null;
 }
 
+const addUserToDB = async (newUser) => {
+    //add user to db
+    user = newUser;
+    user.id = 1;
+    return user;
+}
+
 app.post("/login", async (req, res) =>{
     let {email, pwd} = req.body;
     const password = email + pwd + "secretKey";
@@ -30,6 +37,7 @@ app.post("/login", async (req, res) =>{
     }else{
         let newUser = {email, password: passwordHash};
         let addedUser = await addUserToDB(newUser);
+        const refreshToken = jwt.sign({id: addedUser.id}, "refreshTokenSecret", {expiresIn: '60s'}); //you can give long time
     }
     return res.sendStatus(200)
 })
