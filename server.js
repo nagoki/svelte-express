@@ -33,13 +33,18 @@ app.post("/login", async (req, res) =>{
     const passwordHash = await bcrypt.hash(password, 12);
     let user = await userFromDB(email)
     if(user) {
-         
+         const isMatch = await bcrypt.compare(password, user.password);
+         if(!isMatch) return res.sendStatus(401);
+         const refreshToken = jwt.sign({id: user.id}, "refreshTokenSecret", {expiresIn: '60s'}); //you can give long time
+         res.set('set-cookie', `refreshToken=${refreshToken}; Path='/user/refreshToken; HttpOnly; Max-Age=60`);
+         return res.sendStatus(200);
     }else{
         let newUser = {email, password: passwordHash};
         let addedUser = await addUserToDB(newUser);
         const refreshToken = jwt.sign({id: addedUser.id}, "refreshTokenSecret", {expiresIn: '60s'}); //you can give long time
+        res.set('set-cookie', `refreshToken=${refreshToken}; Path='/user/refreshToken; HttpOnly; Max-Age=60`);
+        return res.sendStatus(200);
     }
-    return res.sendStatus(200)
 })
 
 app.use(express.static('public')); //svelte content will be served from public folder
