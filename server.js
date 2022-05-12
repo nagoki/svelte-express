@@ -11,7 +11,27 @@ app.use(express.urlencoded({ extended: true }));
 
 let user;
 
+// we need to add accesstoken and verify the same.
+
+const verifyToken = async (token, secret) => {
+    return new Promise((resolve, reject)=>{
+        jwt.verify(token, secret, (err, data) => resolve({err, data}))
+    });
+}
+
+//middleware to verify accesstoken.
+const auth = async (req, res, next) => {
+    let authorization = req.get('authorization');
+    if(!authorization) return res.sendStatus(401); //no access token found.
+    let {err, data} = await verifyToken(authorization, 'accessTokenSecret');
+    if(err)
+        res.sendStatus(401);
+    req.authData = data; // you can pass data to other routes
+    next()
+}
+
 app.get("/user", async (req,res) => {
+    console.log(req.authData);
     return res.send(user);
 })
 
