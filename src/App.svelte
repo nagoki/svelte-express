@@ -1,8 +1,25 @@
 <script>
 	import { writable } from "svelte/store";
 	const userStore = writable(null);
+	let token;
+	async function getToken() {
+		if(token) return token;
+		let response = await fetch("/token")
+		if(response.ok){
+			let data = await response.json();
+			token = data.token;
+			return token;
+		}
+		return null;
+	}
+
 	async function getUser() {
-		let userResponse = await fetch('/user')
+		let accessToken = await getToken()
+		if(!accessToken) return;
+		
+		let userResponse = await fetch('/user',{
+			headers: {authorization: accessToken}
+		})
 		return userResponse.ok ? await userResponse.json() : null;
 	}
 	async function login() {
